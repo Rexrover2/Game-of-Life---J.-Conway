@@ -1,3 +1,4 @@
+import com.sun.javafx.css.Rule;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -12,11 +13,6 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class Board {
-    private static final int
-            GAPS = 2,
-            RECT_SIZE = 20,
-            PADDING_SPACE = 10;
-
     // Length and Height of the grid.
     private int n;
     private int[][] board;
@@ -32,7 +28,7 @@ public class Board {
                     rowIndex = GridPane.getRowIndex(source);
 
             board[rowIndex][colIndex] = (board[rowIndex][colIndex] == 1)? 0 : 1;
-            updateGrid(rowIndex, colIndex);
+            updateRect(rowIndex, colIndex);
         }
     };
 
@@ -74,13 +70,68 @@ public class Board {
         fillGrid();
     }
 
+    public void stepProcess(){
+        // Create a new board and always read states from the previous board.
+        int[][] curBoard = new int[n][];
 
+        RuleSet rules = new RuleSet();
+        for (int row = 0; row < n; ++row) {
+            curBoard[row] = new int[n];
+            for (int col = 0; col < n ; ++col) {
+
+                int count = 0,
+                    rStart = chooseIncrementerStart(row),
+                    rEnd = chooseIncrementerEnd(row),
+                    cStart = chooseIncrementerStart(col),
+                    cEnd = chooseIncrementerEnd(col);
+
+                for (int rowNbour = rStart; rowNbour <= rEnd; ++rowNbour) {
+                    for (int colNbour = cStart; colNbour <= cEnd; ++colNbour) {
+                        if (board[row + rowNbour][col + colNbour] == 1) {
+                            ++count;
+                        }
+                    }
+                }
+                // Decrement as the rectangle counts itself if it is alive.
+                if (board[row][col] == 1) {
+                    --count;
+                }
+
+                curBoard[row][col] = rules.ruleSet(count, board[row][col]);
+            }
+        }
+        // replace old board with new board.
+        board = curBoard;
+    }
+
+    /**
+     * For Debugging Purposes - Prints the entire board
+     * */
+    public void printBoard(){
+        for (int row = 0; row < n; ++row) {
+            for (int col = 0; col < n; ++col) {
+                System.out.printf("%d ", board[row][col]);
+            }
+            System.out.printf("%n");
+        }
+        System.out.printf("%n");
+    }
+
+    private int chooseIncrementerStart(int num) {
+        if (num == 0) { return 0; }
+        else { return -1; }
+    }
+
+    private int chooseIncrementerEnd(int num) {
+        if (num == n - 1) { return 0; }
+        else { return 1; }
+    }
     // Deals with formatting of the board.
     private void createGrid() {
         grid = new GridPane();
-        grid.setPadding(new Insets(PADDING_SPACE, PADDING_SPACE, PADDING_SPACE, PADDING_SPACE));
-        grid.setVgap(GAPS);
-        grid.setHgap(GAPS);
+        grid.setPadding(new Insets(App.PADDING_SPACE, App.PADDING_SPACE, App.PADDING_SPACE, App.PADDING_SPACE));
+        grid.setVgap(App.GAPS);
+        grid.setHgap(App.GAPS);
         // Sets background to grey.
         grid.setStyle("-fx-background-color:#808080; -fx-opacity:1;");
     }
@@ -97,13 +148,24 @@ public class Board {
         }
     }
 
-    /** Called to handle mouse clicks, updating the visualised board.
+    /** Updates the entire board.
+     *
+     */
+    public void updateGrid(){
+        for (int row = 0; row < n; row++) {
+            for (int col = 0; col < n; col++) {
+                updateRect(row, col);
+            }
+        }
+    }
+
+    /** Called to handle mouse clicks, a single element on the board.
      *  Only changes the one rectangle that was clicked on -> should be O(1).
      *
      * @param row Row of Grid.
      * @param col Column of Grid.
      */
-    private void updateGrid(int row, int col){
+    private void updateRect(int row, int col){
         Rectangle r = formatRect(row, col);
         grid.getChildren().remove(rects[row][col]);
         rects[row][col] = r;
@@ -111,7 +173,7 @@ public class Board {
     }
 
     private Rectangle formatRect(int row, int col){
-        Rectangle r = new Rectangle(RECT_SIZE, RECT_SIZE);
+        Rectangle r = new Rectangle(App.RECT_SIZE, App.RECT_SIZE);
         r.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseEvent);
         if (board[row][col] == 0) {
             r.setFill(Color.BLACK);
@@ -126,8 +188,12 @@ public class Board {
      *
      * @return Board to be drawn.
      * */
-    public Scene getGrid() {
-        return new Scene(grid, n * RECT_SIZE + n * GAPS + 2*PADDING_SPACE,
-                               n * RECT_SIZE + n * GAPS + 2*PADDING_SPACE);
-    }
+    public GridPane getGrid() { return grid; }
+
+    /**
+     * Returns the size of the board.
+     *
+     * @return Size of Board.
+     * */
+    public int getSize() { return n; }
 }
