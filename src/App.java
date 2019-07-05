@@ -7,9 +7,14 @@ import javafx.stage.Stage;
 
 
 public class App extends Application {
+    private static final double SMALL_NUM = 1e-2;
+
     private Board board;
     private GridPane grid;
     private int n;
+    private long lastNanoTime;
+    private double
+            thresholdSec = 2;
     public static final int
             GAPS = 2,
             RECT_SIZE = 20,
@@ -28,11 +33,18 @@ public class App extends Application {
         Group root = new Group();
         Scene scene = new Scene(root, n * RECT_SIZE + n * GAPS + 2*PADDING_SPACE,
                 n * RECT_SIZE + n * GAPS + 2*PADDING_SPACE);
+        lastNanoTime = System.nanoTime();
         AnimationTimer animator = new AnimationTimer(){
             @Override
-            public void handle(long arg0) {
-                board.stepProcess();
-                board.updateGrid();
+            public void handle(long curNanoTime) {
+
+                double timeElapsed = (curNanoTime - lastNanoTime)/1000000000.0;
+                System.out.printf("diff = %f%n", timeElapsed);
+                if (timeElapsed - thresholdSec > -SMALL_NUM && timeElapsed - thresholdSec < SMALL_NUM) {
+                    board.stepProcess();
+                    board.updateGrid();
+                    lastNanoTime = System.nanoTime();
+                }
             }
         };
         animator.start();
