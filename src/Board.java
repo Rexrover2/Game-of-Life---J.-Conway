@@ -62,6 +62,9 @@ public class Board {
                 }
                 count++;
             }
+            if (count == 1) {
+                fillWithZeroes();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -129,11 +132,9 @@ public class Board {
     // Deals with formatting of the board.
     private void createGrid() {
         grid = new GridPane();
-        grid.setPadding(new Insets(App.PADDING_SPACE, App.PADDING_SPACE, App.PADDING_SPACE, App.PADDING_SPACE));
+        grid.setPadding(new Insets(App.PADDING_SPACE, App.PADDING_SPACE, App.BOTTOM_PADDING_SPACE, App.PADDING_SPACE));
         grid.setVgap(App.GAPS);
         grid.setHgap(App.GAPS);
-        // Sets background to grey.
-        grid.setStyle("-fx-background-color:#808080; -fx-opacity:1;");
     }
 
     // Called only once when the board is initiated.
@@ -144,6 +145,15 @@ public class Board {
                 Rectangle r = formatRect(row, col);
                 grid.add(r, col, row);
                 rects[row][col] = r;
+            }
+        }
+    }
+
+    private void fillWithZeroes() {
+        for (int row = 0; row < n; ++row) {
+            board[row] = new int[n];
+            for (int col = 0; col < n; ++col) {
+                board[row][col] = 0;
             }
         }
     }
